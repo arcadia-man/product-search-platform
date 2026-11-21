@@ -10,19 +10,23 @@ import com.productsearch.search_indexer.dto.ProductPageResponse;
 public class ProductServiceClient {
 
     private final RestClient restClient;
+    private final String productSearchPath;
 
     public ProductServiceClient(
             RestClient.Builder builder,
-            @Value("${product-service.base-url}") String baseUrl) {
+            @Value("${product-service.base-url}") String baseUrl,
+            @Value("${product-service.product-search-path}") String productSearchPath) {
 
         this.restClient = builder
                 .baseUrl(baseUrl)
                 .build();
+
+        this.productSearchPath = productSearchPath;
     }
 
     public ProductPageResponse getProducts(int page, int size) {
         return restClient.get()
-                .uri("/api/v1/products?page={page}&size={size}", page, size)
+                .uri(productSearchPath + "?page={page}&size={size}", page, size)
                 .retrieve()
                 .body(ProductPageResponse.class);
     }
