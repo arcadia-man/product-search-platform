@@ -1,0 +1,69 @@
+TABLE_NAME	COLUMN_NAME	COLUMN_TYPE	IS_NULLABLE	COLUMN_KEY	COLUMN_DEFAULT	EXTRA	REFERENCED_TABLE_NAME	REFERENCED_COLUMN_NAME
+brands	id	bigint	NO	PRI	NULL	auto_increment	NULL	NULL
+brands	name	varchar(150)	NO		NULL		NULL	NULL
+brands	slug	varchar(180)	NO	UNI	NULL		NULL	NULL
+brands	created_at	timestamp	YES		CURRENT_TIMESTAMP	DEFAULT_GENERATED	NULL	NULL
+categories	id	bigint	NO	PRI	NULL	auto_increment	NULL	NULL
+categories	name	varchar(150)	NO		NULL		NULL	NULL
+categories	slug	varchar(180)	NO	UNI	NULL		NULL	NULL
+categories	parent_id	bigint	YES	MUL	NULL		categories	id
+categories	created_at	timestamp	YES		CURRENT_TIMESTAMP	DEFAULT_GENERATED	NULL	NULL
+components	id	bigint	NO	PRI	NULL	auto_increment	NULL	NULL
+components	name	varchar(150)	NO		NULL		NULL	NULL
+components	type	varchar(100)	NO		NULL		NULL	NULL
+flyway_schema_history	installed_rank	int	NO	PRI	NULL		NULL	NULL
+flyway_schema_history	version	varchar(50)	YES		NULL		NULL	NULL
+flyway_schema_history	description	varchar(200)	NO		NULL		NULL	NULL
+flyway_schema_history	type	varchar(20)	NO		NULL		NULL	NULL
+flyway_schema_history	script	varchar(1000)	NO		NULL		NULL	NULL
+flyway_schema_history	checksum	int	YES		NULL		NULL	NULL
+flyway_schema_history	installed_by	varchar(100)	NO		NULL		NULL	NULL
+flyway_schema_history	installed_on	timestamp	NO		CURRENT_TIMESTAMP	DEFAULT_GENERATED	NULL	NULL
+flyway_schema_history	execution_time	int	NO		NULL		NULL	NULL
+flyway_schema_history	success	tinyint(1)	NO	MUL	NULL		NULL	NULL
+inventory	id	bigint	NO	PRI	NULL	auto_increment	NULL	NULL
+inventory	variant_id	bigint	NO	MUL	NULL		product_variants	id
+inventory	warehouse_id	bigint	NO	MUL	NULL		warehouses	id
+inventory	available_quantity	int	NO		0		NULL	NULL
+inventory	updated_at	timestamp	YES		CURRENT_TIMESTAMP	DEFAULT_GENERATED on update CURRENT_TIMESTAMP	NULL	NULL
+product_attributes	id	bigint	NO	PRI	NULL	auto_increment	NULL	NULL
+product_attributes	product_id	bigint	NO	MUL	NULL		products	id
+product_attributes	attribute_name	varchar(150)	NO		NULL		NULL	NULL
+product_attributes	attribute_value	varchar(500)	NO		NULL		NULL	NULL
+product_categories	product_id	bigint	NO	PRI	NULL		products	id
+product_categories	category_id	bigint	NO	PRI	NULL		categories	id
+product_components	id	bigint	NO	PRI	NULL	auto_increment	NULL	NULL
+product_components	product_id	bigint	NO	MUL	NULL		products	id
+product_components	component_id	bigint	NO	MUL	NULL		components	id
+product_components	quantity	decimal(12,3)	NO		1.000		NULL	NULL
+product_prices	id	bigint	NO	PRI	NULL	auto_increment	NULL	NULL
+product_prices	product_id	bigint	NO	MUL	NULL		products	id
+product_prices	variant_id	bigint	YES	MUL	NULL		product_variants	id
+product_prices	currency	varchar(10)	NO		INR		NULL	NULL
+product_prices	price	decimal(12,2)	NO		NULL		NULL	NULL
+product_prices	discount_price	decimal(12,2)	YES		NULL		NULL	NULL
+product_prices	valid_from	timestamp	YES		NULL		NULL	NULL
+product_prices	valid_to	timestamp	YES		NULL		NULL	NULL
+product_prices	updated_at	timestamp	YES		CURRENT_TIMESTAMP	DEFAULT_GENERATED on update CURRENT_TIMESTAMP	NULL	NULL
+product_variants	id	bigint	NO	PRI	NULL	auto_increment	NULL	NULL
+product_variants	product_id	bigint	NO	MUL	NULL		products	id
+product_variants	sku	varchar(100)	NO	UNI	NULL		NULL	NULL
+product_variants	color	varchar(100)	YES		NULL		NULL	NULL
+product_variants	size	varchar(100)	YES		NULL		NULL	NULL
+product_variants	material	varchar(100)	YES		NULL		NULL	NULL
+product_variants	status	varchar(30)	NO		ACTIVE		NULL	NULL
+product_variants	created_at	timestamp	YES		CURRENT_TIMESTAMP	DEFAULT_GENERATED	NULL	NULL
+product_variants	updated_at	timestamp	YES		CURRENT_TIMESTAMP	DEFAULT_GENERATED on update CURRENT_TIMESTAMP	NULL	NULL
+products	id	bigint	NO	PRI	NULL	auto_increment	NULL	NULL
+products	name	varchar(255)	NO		NULL		NULL	NULL
+products	slug	varchar(280)	NO	UNI	NULL		NULL	NULL
+products	description	text	YES		NULL		NULL	NULL
+products	brand_id	bigint	YES	MUL	NULL		brands	id
+products	sku	varchar(100)	NO	UNI	NULL		NULL	NULL
+products	price	decimal(12,2)	NO		NULL		NULL	NULL
+products	status	varchar(30)	NO		ACTIVE		NULL	NULL
+products	created_at	timestamp	YES		CURRENT_TIMESTAMP	DEFAULT_GENERATED	NULL	NULL
+products	updated_at	timestamp	YES		CURRENT_TIMESTAMP	DEFAULT_GENERATED on update CURRENT_TIMESTAMP	NULL	NULL
+warehouses	id	bigint	NO	PRI	NULL	auto_increment	NULL	NULL
+warehouses	name	varchar(150)	NO		NULL		NULL	NULL
+warehouses	city	varchar(100)	NO		NULL		NULL	NULL
