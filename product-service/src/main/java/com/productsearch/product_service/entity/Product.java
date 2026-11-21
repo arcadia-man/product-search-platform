@@ -6,6 +6,8 @@ import java.time.LocalDateTime;
 import java.util.HashSet;
 import java.util.Set;
 
+import org.hibernate.annotations.BatchSize;
+
 import jakarta.persistence.Column;
 import jakarta.persistence.Entity;
 import jakarta.persistence.FetchType;
@@ -16,6 +18,7 @@ import jakarta.persistence.JoinColumn;
 import jakarta.persistence.JoinTable;
 import jakarta.persistence.ManyToMany;
 import jakarta.persistence.ManyToOne;
+import jakarta.persistence.OneToMany;
 import jakarta.persistence.Table;
 import lombok.Getter;
 import lombok.Setter;
@@ -46,6 +49,7 @@ public class Product {
     @Column(nullable = false, unique = true, length = 100)
     private String sku;
 
+    // Legacy field retained for backward compatibility.
     @Column(nullable = false, precision = 12, scale = 2)
     private BigDecimal price;
 
@@ -53,8 +57,29 @@ public class Product {
     private String status;
 
     @ManyToMany(fetch = FetchType.LAZY)
-    @JoinTable(name = "product_categories", joinColumns = @JoinColumn(name = "product_id"), inverseJoinColumns = @JoinColumn(name = "category_id"))
+    @JoinTable(
+        name = "product_categories",
+        joinColumns = @JoinColumn(name = "product_id"),
+        inverseJoinColumns = @JoinColumn(name = "category_id")
+    )
+    @BatchSize(size = 50)
     private Set<Category> categories = new HashSet<>();
+
+    @OneToMany(mappedBy = "product", fetch = FetchType.LAZY)
+    @BatchSize(size = 50)
+    private Set<ProductVariant> variants = new HashSet<>();
+
+    @OneToMany(mappedBy = "product", fetch = FetchType.LAZY)
+    @BatchSize(size = 50)
+    private Set<ProductPrice> prices = new HashSet<>();
+
+    @OneToMany(mappedBy = "product", fetch = FetchType.LAZY)
+    @BatchSize(size = 50)
+    private Set<ProductComponent> components = new HashSet<>();
+
+    @OneToMany(mappedBy = "product", fetch = FetchType.LAZY)
+    @BatchSize(size = 50)
+    private Set<ProductAttribute> attributes = new HashSet<>();
 
     @Column(name = "created_at", insertable = false, updatable = false)
     private LocalDateTime createdAt;
