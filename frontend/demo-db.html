@@ -1,0 +1,1530 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Product Search — MySQL Database Demo</title>
+  <style>
+    :root {
+      --bg: #f8fafc;
+      --card-bg: #ffffff;
+      --border: #e2e8f0;
+      --border-focus: #3b82f6;
+      --text: #0f172a;
+      --text-muted: #64748b;
+      --primary: #2563eb;
+      --primary-hover: #1d4ed8;
+      --primary-light: #eff6ff;
+      --badge-bg: #f1f5f9;
+      --success: #16a34a;
+      --success-light: #f0fdf4;
+      --warning: #d97706;
+      --warning-light: #fffbeb;
+      --danger: #dc2626;
+      --radius: 8px;
+      --shadow-sm: 0 1px 2px 0 rgb(0 0 0 / 0.05);
+      --shadow: 0 4px 6px -1px rgb(0 0 0 / 0.1), 0 2px 4px -2px rgb(0 0 0 / 0.1);
+      --shadow-lg: 0 10px 15px -3px rgb(0 0 0 / 0.1), 0 4px 6px -4px rgb(0 0 0 / 0.1);
+    }
+
+    * {
+      box-sizing: border-box;
+      margin: 0;
+      padding: 0;
+    }
+
+    body {
+      font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Oxygen, Ubuntu, Cantarell, sans-serif;
+      background: var(--bg);
+      color: var(--text);
+      line-height: 1.5;
+      padding: 24px;
+    }
+
+    .container {
+      max-width: 1200px;
+      margin: 0 auto;
+    }
+
+    /* Header */
+    header {
+      margin-bottom: 24px;
+      display: flex;
+      justify-content: space-between;
+      align-items: flex-start;
+      flex-wrap: wrap;
+      gap: 16px;
+    }
+
+    .title-group h1 {
+      font-size: 1.75rem;
+      font-weight: 700;
+      color: #0f172a;
+      display: flex;
+      align-items: center;
+      gap: 10px;
+    }
+
+    .title-group .db-pill {
+      font-size: 0.75rem;
+      background: #e0e7ff;
+      color: #3730a3;
+      padding: 3px 8px;
+      border-radius: 9999px;
+      font-weight: 600;
+    }
+
+    .title-group p {
+      color: var(--text-muted);
+      font-size: 0.9rem;
+      margin-top: 4px;
+    }
+
+    .api-config {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      font-size: 0.85rem;
+      background: #fff;
+      padding: 6px 12px;
+      border: 1px solid var(--border);
+      border-radius: var(--radius);
+    }
+
+    .api-config input {
+      border: none;
+      outline: none;
+      background: transparent;
+      font-family: monospace;
+      font-size: 0.8rem;
+      width: 170px;
+    }
+
+    .status-dot {
+      width: 8px;
+      height: 8px;
+      border-radius: 50%;
+      background: var(--success);
+      display: inline-block;
+    }
+
+    /* Search & Suggestion Bar */
+    .search-section {
+      background: var(--card-bg);
+      padding: 20px;
+      border-radius: var(--radius);
+      border: 1px solid var(--border);
+      box-shadow: var(--shadow-sm);
+      margin-bottom: 20px;
+    }
+
+    .search-wrapper {
+      position: relative;
+      display: flex;
+      gap: 10px;
+    }
+
+    .search-input-box {
+      position: relative;
+      flex: 1;
+    }
+
+    .search-input-box input {
+      width: 100%;
+      padding: 12px 16px;
+      font-size: 1rem;
+      border: 1.5px solid var(--border);
+      border-radius: var(--radius);
+      outline: none;
+      transition: border-color 0.15s ease, box-shadow 0.15s ease;
+    }
+
+    .search-input-box input:focus {
+      border-color: var(--border-focus);
+      box-shadow: 0 0 0 3px rgba(59, 130, 246, 0.15);
+    }
+
+    .btn {
+      padding: 10px 18px;
+      font-size: 0.95rem;
+      font-weight: 600;
+      border-radius: var(--radius);
+      cursor: pointer;
+      border: none;
+      transition: all 0.15s ease;
+      display: inline-flex;
+      align-items: center;
+      gap: 6px;
+    }
+
+    .btn-primary {
+      background: var(--primary);
+      color: #fff;
+    }
+
+    .btn-primary:hover {
+      background: var(--primary-hover);
+    }
+
+    .btn-secondary {
+      background: #fff;
+      color: var(--text);
+      border: 1px solid var(--border);
+    }
+
+    .btn-secondary:hover {
+      background: #f1f5f9;
+    }
+
+    /* Suggestions Dropdown */
+    .suggestions-dropdown {
+      position: absolute;
+      top: 100%;
+      left: 0;
+      right: 0;
+      background: #fff;
+      border: 1px solid var(--border);
+      border-top: none;
+      border-radius: 0 0 var(--radius) var(--radius);
+      box-shadow: var(--shadow-lg);
+      z-index: 100;
+      max-height: 380px;
+      overflow-y: auto;
+      display: none;
+      margin-top: 2px;
+    }
+
+    .suggestion-item {
+      padding: 10px 16px;
+      display: flex;
+      align-items: center;
+      gap: 12px;
+      cursor: pointer;
+      border-bottom: 1px solid #f8fafc;
+      transition: background 0.1s ease;
+    }
+
+    .suggestion-item:last-child {
+      border-bottom: none;
+    }
+
+    .suggestion-item:hover,
+    .suggestion-item.highlighted {
+      background: var(--primary-light);
+    }
+
+    .key-badge {
+      font-size: 0.72rem;
+      font-weight: 700;
+      text-transform: uppercase;
+      padding: 2px 7px;
+      border-radius: 4px;
+      letter-spacing: 0.5px;
+      white-space: nowrap;
+    }
+
+    .key-brand { background: #dbeafe; color: #1e40af; }
+    .key-category { background: #f3e8ff; color: #6b21a8; }
+    .key-name { background: #dcfce7; color: #166534; }
+    .key-sku { background: #fef3c7; color: #92400e; }
+    .key-attribute { background: #cffafe; color: #155e75; }
+    .key-description { background: #ede9fe; color: #5b21b6; }
+
+    .suggestion-value {
+      font-size: 0.95rem;
+      font-weight: 500;
+      color: var(--text);
+    }
+
+    .suggestion-hint {
+      margin-left: auto;
+      font-size: 0.75rem;
+      color: var(--text-muted);
+    }
+
+    /* Active Filters Bar */
+    .filters-bar {
+      margin-top: 16px;
+      padding-top: 14px;
+      border-top: 1px solid #f1f5f9;
+      display: flex;
+      flex-wrap: wrap;
+      align-items: center;
+      gap: 10px;
+    }
+
+    .filters-label {
+      font-size: 0.85rem;
+      font-weight: 600;
+      color: var(--text-muted);
+    }
+
+    .filter-chip {
+      background: #e2e8f0;
+      color: #1e293b;
+      font-size: 0.82rem;
+      padding: 4px 10px;
+      border-radius: 9999px;
+      display: inline-flex;
+      align-items: center;
+      gap: 6px;
+      font-weight: 500;
+    }
+
+    .filter-chip .chip-key {
+      font-weight: 700;
+      color: #475569;
+    }
+
+    .filter-chip button {
+      background: transparent;
+      border: none;
+      cursor: pointer;
+      color: #64748b;
+      font-size: 0.9rem;
+      font-weight: 700;
+      line-height: 1;
+      border-radius: 50%;
+      width: 14px;
+      height: 14px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+    }
+
+    .filter-chip button:hover {
+      color: var(--danger);
+    }
+
+    .clear-filters-btn {
+      background: none;
+      border: none;
+      color: var(--primary);
+      font-size: 0.82rem;
+      font-weight: 600;
+      cursor: pointer;
+      padding: 4px 6px;
+      text-decoration: underline;
+    }
+
+    /* Additional Filter Controls */
+    .controls-row {
+      margin-top: 12px;
+      display: flex;
+      flex-wrap: wrap;
+      align-items: center;
+      gap: 16px;
+      font-size: 0.85rem;
+      color: var(--text-muted);
+    }
+
+    .inline-field {
+      display: flex;
+      align-items: center;
+      gap: 6px;
+    }
+
+    .inline-field input[type="number"] {
+      width: 90px;
+      padding: 5px 8px;
+      font-size: 0.85rem;
+      border: 1px solid var(--border);
+      border-radius: 4px;
+      outline: none;
+    }
+
+    .inline-field select {
+      padding: 5px 8px;
+      font-size: 0.85rem;
+      border: 1px solid var(--border);
+      border-radius: 4px;
+      outline: none;
+      background: #fff;
+    }
+
+    /* Results Bar */
+    .results-bar {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      margin-bottom: 16px;
+      flex-wrap: wrap;
+      gap: 10px;
+    }
+
+    .results-count {
+      font-size: 0.9rem;
+      color: var(--text-muted);
+    }
+
+    .results-count strong {
+      color: var(--text);
+    }
+
+    .latency-badge {
+      font-size: 0.75rem;
+      background: #f1f5f9;
+      color: #475569;
+      padding: 3px 8px;
+      border-radius: 4px;
+      font-family: monospace;
+    }
+
+    /* Product Grid & Cards */
+    .products-grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fill, minmax(280px, 1fr));
+      gap: 16px;
+      margin-bottom: 24px;
+    }
+
+    .product-card {
+      background: var(--card-bg);
+      border: 1px solid var(--border);
+      border-radius: var(--radius);
+      padding: 16px;
+      display: flex;
+      flex-direction: column;
+      box-shadow: var(--shadow-sm);
+      transition: transform 0.15s ease, box-shadow 0.15s ease, border-color 0.15s ease;
+    }
+
+    .product-card:hover {
+      transform: translateY(-2px);
+      box-shadow: var(--shadow);
+      border-color: #cbd5e1;
+    }
+
+    .card-top {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      margin-bottom: 8px;
+      font-size: 0.75rem;
+    }
+
+    .brand-pill {
+      font-weight: 600;
+      color: var(--primary);
+      background: var(--primary-light);
+      padding: 2px 8px;
+      border-radius: 4px;
+    }
+
+    .status-pill {
+      font-weight: 600;
+      padding: 2px 6px;
+      border-radius: 4px;
+    }
+
+    .status-active {
+      background: var(--success-light);
+      color: var(--success);
+    }
+
+    .status-inactive {
+      background: #fee2e2;
+      color: var(--danger);
+    }
+
+    .card-title {
+      font-size: 1.05rem;
+      font-weight: 600;
+      color: var(--text);
+      margin-bottom: 6px;
+      line-height: 1.35;
+      display: -webkit-box;
+      -webkit-line-clamp: 2;
+      -webkit-box-orient: vertical;
+      overflow: hidden;
+      min-height: 2.7em;
+    }
+
+    .card-sku {
+      font-family: monospace;
+      font-size: 0.78rem;
+      color: var(--text-muted);
+      margin-bottom: 10px;
+    }
+
+    .card-categories {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 4px;
+      margin-bottom: 12px;
+    }
+
+    .cat-tag {
+      font-size: 0.72rem;
+      background: var(--badge-bg);
+      color: #475569;
+      padding: 2px 6px;
+      border-radius: 4px;
+    }
+
+    .card-bottom {
+      margin-top: auto;
+      padding-top: 12px;
+      border-top: 1px solid #f1f5f9;
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+    }
+
+    .price-box .price-val {
+      font-size: 1.2rem;
+      font-weight: 700;
+      color: #0f172a;
+    }
+
+    .stock-indicator {
+      font-size: 0.72rem;
+      font-weight: 600;
+      display: flex;
+      align-items: center;
+      gap: 4px;
+      margin-top: 2px;
+    }
+
+    .stock-in { color: var(--success); }
+    .stock-out { color: var(--danger); }
+
+    .btn-open {
+      padding: 6px 14px;
+      font-size: 0.85rem;
+      font-weight: 600;
+      background: #0f172a;
+      color: #fff;
+      border-radius: 6px;
+      border: none;
+      cursor: pointer;
+      transition: background 0.15s ease;
+    }
+
+    .btn-open:hover {
+      background: var(--primary);
+    }
+
+    /* Pagination */
+    .pagination-bar {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      flex-wrap: wrap;
+      gap: 12px;
+      margin-top: 20px;
+      padding: 12px 0;
+    }
+
+    .page-nav {
+      display: flex;
+      align-items: center;
+      gap: 4px;
+    }
+
+    .page-btn {
+      padding: 6px 12px;
+      font-size: 0.85rem;
+      font-weight: 600;
+      border: 1px solid var(--border);
+      background: #fff;
+      color: var(--text);
+      border-radius: 6px;
+      cursor: pointer;
+      transition: all 0.15s ease;
+    }
+
+    .page-btn:hover:not(:disabled) {
+      background: #f1f5f9;
+      border-color: #cbd5e1;
+    }
+
+    .page-btn.active {
+      background: var(--primary);
+      color: #fff;
+      border-color: var(--primary);
+    }
+
+    .page-btn:disabled {
+      opacity: 0.4;
+      cursor: not-allowed;
+    }
+
+    /* Modal Dialog */
+    dialog {
+      border: none;
+      border-radius: 12px;
+      box-shadow: 0 25px 50px -12px rgb(0 0 0 / 0.25);
+      width: min(850px, 94vw);
+      max-height: 88vh;
+      overflow-y: auto;
+      margin: auto;
+      padding: 0;
+      background: #ffffff;
+    }
+
+    dialog::backdrop {
+      background: rgba(15, 23, 42, 0.6);
+      backdrop-filter: blur(2px);
+    }
+
+    .modal-header {
+      padding: 18px 24px;
+      border-bottom: 1px solid var(--border);
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      position: sticky;
+      top: 0;
+      background: #fff;
+      z-index: 10;
+    }
+
+    .modal-header h2 {
+      font-size: 1.25rem;
+      font-weight: 700;
+    }
+
+    .modal-close-btn {
+      background: transparent;
+      border: none;
+      font-size: 1.5rem;
+      line-height: 1;
+      cursor: pointer;
+      color: var(--text-muted);
+      border-radius: 6px;
+      padding: 4px 8px;
+    }
+
+    .modal-close-btn:hover {
+      background: #f1f5f9;
+      color: var(--text);
+    }
+
+    .modal-body {
+      padding: 24px;
+      display: flex;
+      flex-direction: column;
+      gap: 20px;
+    }
+
+    .meta-grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(180px, 1fr));
+      gap: 12px;
+      background: #f8fafc;
+      padding: 14px;
+      border-radius: var(--radius);
+      border: 1px solid var(--border);
+      font-size: 0.85rem;
+    }
+
+    .meta-item .meta-label {
+      color: var(--text-muted);
+      font-size: 0.75rem;
+      text-transform: uppercase;
+      font-weight: 600;
+      margin-bottom: 2px;
+    }
+
+    .meta-item .meta-val {
+      font-weight: 600;
+      color: var(--text);
+    }
+
+    .section-title {
+      font-size: 0.95rem;
+      font-weight: 700;
+      color: #1e293b;
+      margin-bottom: 8px;
+      display: flex;
+      align-items: center;
+      gap: 6px;
+    }
+
+    /* Modal Tables */
+    .table-container {
+      border: 1px solid var(--border);
+      border-radius: var(--radius);
+      overflow-x: auto;
+    }
+
+    table {
+      width: 100%;
+      border-collapse: collapse;
+      font-size: 0.85rem;
+      text-align: left;
+    }
+
+    th {
+      background: #f8fafc;
+      padding: 8px 12px;
+      font-weight: 600;
+      color: #475569;
+      border-bottom: 1px solid var(--border);
+    }
+
+    td {
+      padding: 8px 12px;
+      border-bottom: 1px solid #f1f5f9;
+      color: #1e293b;
+    }
+
+    tr:last-child td {
+      border-bottom: none;
+    }
+
+    /* Collapsible JSON */
+    details.raw-json {
+      background: #0f172a;
+      color: #e2e8f0;
+      border-radius: var(--radius);
+      font-size: 0.8rem;
+      overflow: hidden;
+    }
+
+    details.raw-json summary {
+      padding: 10px 14px;
+      font-weight: 600;
+      cursor: pointer;
+      user-select: none;
+      background: #1e293b;
+    }
+
+    details.raw-json pre {
+      padding: 14px;
+      overflow-x: auto;
+      font-family: monospace;
+      line-height: 1.4;
+    }
+
+    /* Empty & Loading states */
+    .empty-state {
+      text-align: center;
+      padding: 48px 16px;
+      background: #fff;
+      border: 1px dashed var(--border);
+      border-radius: var(--radius);
+      color: var(--text-muted);
+    }
+
+    .loading-spinner {
+      display: inline-block;
+      width: 20px;
+      height: 20px;
+      border: 2px solid rgba(255,255,255,0.3);
+      border-radius: 50%;
+      border-top-color: #fff;
+      animation: spin 0.8s linear infinite;
+    }
+
+    @keyframes spin {
+      to { transform: rotate(360deg); }
+    }
+  </style>
+</head>
+<body>
+
+  <div class="container">
+    <!-- Header -->
+    <header>
+      <div class="title-group">
+        <h1>
+          Product Search
+          <span class="db-pill">Direct MySQL (Baseline)</span>
+        </h1>
+        <p>Single-page catalog demo using relational database search, suggestions & loaded product projection.</p>
+      </div>
+
+      <div class="api-config">
+        <span class="status-dot"></span>
+        <span>Backend:</span>
+        <input type="text" id="apiBase" value="http://localhost:8080" title="API Base URL">
+      </div>
+    </header>
+
+    <!-- Search Section -->
+    <section class="search-section">
+      <div class="search-wrapper">
+        <div class="search-input-box">
+          <input
+            type="text"
+            id="searchInput"
+            placeholder="Search products, brands, categories, attributes, SKU or description..."
+            autocomplete="off"
+          >
+          <div id="suggestionsDropdown" class="suggestions-dropdown"></div>
+        </div>
+        <button id="searchBtn" class="btn btn-primary">Search</button>
+      </div>
+
+      <!-- Applied Filters Bar -->
+      <div id="filtersBar" class="filters-bar" style="display: none;">
+        <span class="filters-label">Active Filters:</span>
+        <div id="filterChips" style="display: flex; flex-wrap: wrap; gap: 8px;"></div>
+        <button id="clearAllFiltersBtn" class="clear-filters-btn">Clear All</button>
+      </div>
+
+      <!-- Quick Inline Filter Controls -->
+      <div class="controls-row">
+        <div class="inline-field">
+          <label for="minPriceInput">Min ₹:</label>
+          <input type="number" id="minPriceInput" placeholder="0" min="0">
+        </div>
+        <div class="inline-field">
+          <label for="maxPriceInput">Max ₹:</label>
+          <input type="number" id="maxPriceInput" placeholder="100000" min="0">
+        </div>
+        <div class="inline-field">
+          <input type="checkbox" id="inStockCheckbox">
+          <label for="inStockCheckbox">In-Stock Only</label>
+        </div>
+        <div class="inline-field" style="margin-left: auto;">
+          <label for="sortSelect">Sort:</label>
+          <select id="sortSelect">
+            <option value="createdAt,desc">Newest First</option>
+            <option value="price,asc">Price: Low to High</option>
+            <option value="price,desc">Price: High to Low</option>
+            <option value="name,asc">Name: A to Z</option>
+          </select>
+        </div>
+      </div>
+    </section>
+
+    <!-- Results Status Bar -->
+    <div class="results-bar">
+      <div class="results-count" id="resultsCount">Loading products...</div>
+      <div class="latency-badge" id="latencyBadge">⚡ MySQL DB</div>
+    </div>
+
+    <!-- Product Grid -->
+    <main class="products-grid" id="productsGrid"></main>
+
+    <!-- Pagination Bar -->
+    <div class="pagination-bar" id="paginationBar" style="display: none;">
+      <div style="font-size: 0.85rem; color: var(--text-muted);">
+        Items per page:
+        <select id="pageSizeSelect" style="padding: 4px 8px; border: 1px solid var(--border); border-radius: 4px;">
+          <option value="12">12</option>
+          <option value="20" selected>20</option>
+          <option value="50">50</option>
+          <option value="100">100</option>
+        </select>
+      </div>
+      <div class="page-nav" id="pageNav"></div>
+    </div>
+  </div>
+
+  <!-- Detail Dialog Box (all data loaded at page load, zero fetch call on open) -->
+  <dialog id="productDialog">
+    <div class="modal-header">
+      <div>
+        <h2 id="modalTitle">Product Details</h2>
+        <div id="modalSubtitle" style="font-size: 0.85rem; color: var(--text-muted); margin-top: 2px;"></div>
+      </div>
+      <button class="modal-close-btn" id="modalCloseBtn" aria-label="Close">&times;</button>
+    </div>
+
+    <div class="modal-body" id="modalBody">
+      <!-- Injected by JavaScript -->
+    </div>
+  </dialog>
+
+  <script>
+    // State management
+    const state = {
+      appliedFilters: [], // array of { key, value, label }
+      page: 0,
+      size: 20,
+      sort: 'createdAt,desc',
+      products: [],
+      totalPages: 0,
+      totalElements: 0,
+      selectedSuggestionIndex: -1,
+      suggestions: []
+    };
+
+    // DOM Elements
+    const apiBaseInput = document.getElementById('apiBase');
+    const searchInput = document.getElementById('searchInput');
+    const searchBtn = document.getElementById('searchBtn');
+    const suggestionsDropdown = document.getElementById('suggestionsDropdown');
+    const filtersBar = document.getElementById('filtersBar');
+    const filterChips = document.getElementById('filterChips');
+    const clearAllFiltersBtn = document.getElementById('clearAllFiltersBtn');
+    const minPriceInput = document.getElementById('minPriceInput');
+    const maxPriceInput = document.getElementById('maxPriceInput');
+    const inStockCheckbox = document.getElementById('inStockCheckbox');
+    const sortSelect = document.getElementById('sortSelect');
+    const resultsCount = document.getElementById('resultsCount');
+    const latencyBadge = document.getElementById('latencyBadge');
+    const productsGrid = document.getElementById('productsGrid');
+    const paginationBar = document.getElementById('paginationBar');
+    const pageNav = document.getElementById('pageNav');
+    const pageSizeSelect = document.getElementById('pageSizeSelect');
+    const productDialog = document.getElementById('productDialog');
+    const modalCloseBtn = document.getElementById('modalCloseBtn');
+    const modalTitle = document.getElementById('modalTitle');
+    const modalSubtitle = document.getElementById('modalSubtitle');
+    const modalBody = document.getElementById('modalBody');
+
+    function getApiBase() {
+      return (apiBaseInput.value || '').trim().replace(/\/+$/, '');
+    }
+
+    // Format currency (INR)
+    function formatPrice(amount, currency = 'INR') {
+      if (amount == null) return 'N/A';
+      return new Intl.NumberFormat('en-IN', {
+        style: 'currency',
+        currency: currency,
+        maximumFractionDigits: 2
+      }).format(amount);
+    }
+
+    // Debounce helper
+    function debounce(func, wait) {
+      let timeout;
+      return function(...args) {
+        clearTimeout(timeout);
+        timeout = setTimeout(() => func.apply(this, args), wait);
+      };
+    }
+
+    // Suggestion fetcher
+    async function fetchSuggestions(query) {
+      if (!query || query.trim().length === 0) {
+        hideSuggestions();
+        return;
+      }
+
+      try {
+        const url = `${getApiBase()}/api/v1/products/suggestions?q=${encodeURIComponent(query.trim())}`;
+        const res = await fetch(url);
+        if (!res.ok) throw new Error('Failed to fetch suggestions');
+        const data = await res.json();
+        state.suggestions = data.suggestions || [];
+        renderSuggestions(state.suggestions);
+      } catch (err) {
+        console.warn('Suggestion error:', err);
+        hideSuggestions();
+      }
+    }
+
+    function renderSuggestions(suggestions) {
+      if (!suggestions || suggestions.length === 0) {
+        hideSuggestions();
+        return;
+      }
+
+      state.selectedSuggestionIndex = -1;
+      suggestionsDropdown.innerHTML = '';
+
+      suggestions.forEach((sug, index) => {
+        const item = document.createElement('div');
+        item.className = 'suggestion-item';
+        item.dataset.index = index;
+
+        const keyClass = `key-${(sug.key || '').toLowerCase()}`;
+        item.innerHTML = `
+          <span class="key-badge ${keyClass}">${escapeHtml(sug.key || 'item')}</span>
+          <span class="suggestion-value">${escapeHtml(sug.value || '')}</span>
+          <span class="suggestion-hint">Apply filter</span>
+        `;
+
+        item.addEventListener('click', () => {
+          applyFilterFromSuggestion(sug);
+        });
+
+        suggestionsDropdown.appendChild(item);
+      });
+
+      suggestionsDropdown.style.display = 'block';
+    }
+
+    function hideSuggestions() {
+      suggestionsDropdown.style.display = 'none';
+      state.selectedSuggestionIndex = -1;
+      state.suggestions = [];
+    }
+
+    // Apply filter from suggestion item
+    function applyFilterFromSuggestion(sug) {
+      // Remove any previous filter with the same key
+      state.appliedFilters = state.appliedFilters.filter(f => f.key !== sug.key);
+
+      state.appliedFilters.push({
+        key: sug.key,
+        value: sug.value,
+        label: `${sug.key}: ${sug.value}`
+      });
+
+      searchInput.value = '';
+      hideSuggestions();
+      state.page = 0;
+      updateFiltersUI();
+      executeSearch();
+    }
+
+    // Apply manual search keyword
+    function applyKeywordFilter(text) {
+      const trimmed = text.trim();
+      if (!trimmed) return;
+
+      // Remove previous keyword filter
+      state.appliedFilters = state.appliedFilters.filter(f => f.key !== 'keyword');
+
+      state.appliedFilters.push({
+        key: 'keyword',
+        value: trimmed,
+        label: `Search: "${trimmed}"`
+      });
+
+      searchInput.value = '';
+      hideSuggestions();
+      state.page = 0;
+      updateFiltersUI();
+      executeSearch();
+    }
+
+    // Remove single filter
+    function removeFilter(key) {
+      state.appliedFilters = state.appliedFilters.filter(f => f.key !== key);
+      state.page = 0;
+      updateFiltersUI();
+      executeSearch();
+    }
+
+    // Clear all filters
+    function clearAllFilters() {
+      state.appliedFilters = [];
+      minPriceInput.value = '';
+      maxPriceInput.value = '';
+      inStockCheckbox.checked = false;
+      state.page = 0;
+      updateFiltersUI();
+      executeSearch();
+    }
+
+    // Update the Filter Chips UI
+    function updateFiltersUI() {
+      filterChips.innerHTML = '';
+
+      if (state.appliedFilters.length === 0) {
+        filtersBar.style.display = 'none';
+        return;
+      }
+
+      filtersBar.style.display = 'flex';
+
+      state.appliedFilters.forEach(filter => {
+        const chip = document.createElement('div');
+        chip.className = 'filter-chip';
+        chip.innerHTML = `
+          <span class="chip-key">${escapeHtml(filter.key)}:</span>
+          <span>${escapeHtml(filter.value)}</span>
+          <button type="button" title="Remove filter">&times;</button>
+        `;
+
+        chip.querySelector('button').addEventListener('click', (e) => {
+          e.stopPropagation();
+          removeFilter(filter.key);
+        });
+
+        filterChips.appendChild(chip);
+      });
+    }
+
+    // Build URL query parameters
+    function buildSearchParams() {
+      const params = new URLSearchParams();
+
+      params.set('page', state.page);
+      params.set('size', state.size);
+      params.set('sort', state.sort);
+
+      state.appliedFilters.forEach(f => {
+        params.set(f.key, f.value);
+      });
+
+      const minP = minPriceInput.value.trim();
+      if (minP) params.set('minPrice', minP);
+
+      const maxP = maxPriceInput.value.trim();
+      if (maxP) params.set('maxPrice', maxP);
+
+      if (inStockCheckbox.checked) {
+        params.set('available', 'true');
+      }
+
+      return params.toString();
+    }
+
+    // Execute product search
+    async function executeSearch() {
+      const startTime = performance.now();
+      productsGrid.innerHTML = `
+        <div class="empty-state" style="grid-column: 1 / -1;">
+          <div class="loading-spinner" style="border-top-color: var(--primary); border-color: rgba(37,99,235,0.2);"></div>
+          <div style="margin-top: 12px; font-weight: 500;">Executing MySQL relational query...</div>
+        </div>
+      `;
+
+      try {
+        const queryStr = buildSearchParams();
+        const url = `${getApiBase()}/api/v1/products/search/db?${queryStr}`;
+        const res = await fetch(url);
+        const duration = Math.round(performance.now() - startTime);
+
+        if (!res.ok) {
+          throw new Error(`HTTP ${res.status}: ${res.statusText}`);
+        }
+
+        const data = await res.json();
+        state.products = data.content || [];
+        state.totalPages = data.totalPages || 0;
+        state.totalElements = data.totalElements || 0;
+
+        latencyBadge.textContent = `⚡ MySQL Query: ${duration}ms`;
+        renderResults();
+      } catch (err) {
+        console.error('Search failed:', err);
+        productsGrid.innerHTML = `
+          <div class="empty-state" style="grid-column: 1 / -1; border-color: #fca5a5; background: #fff5f5;">
+            <div style="color: var(--danger); font-weight: 700; font-size: 1.1rem; margin-bottom: 6px;">
+              Search Failed
+            </div>
+            <p style="font-size: 0.9rem; color: #7f1d1d;">
+              ${escapeHtml(err.message)}. Ensure backend is running on <code>${getApiBase()}</code>.
+            </p>
+          </div>
+        `;
+        resultsCount.textContent = 'Error connecting to database';
+      }
+    }
+
+    // Render cards and pagination
+    function renderResults() {
+      const fromItem = state.totalElements === 0 ? 0 : state.page * state.size + 1;
+      const toItem = Math.min((state.page + 1) * state.size, state.totalElements);
+      resultsCount.innerHTML = `Showing <strong>${fromItem}–${toItem}</strong> of <strong>${state.totalElements.toLocaleString()}</strong> products`;
+
+      if (state.products.length === 0) {
+        productsGrid.innerHTML = `
+          <div class="empty-state" style="grid-column: 1 / -1;">
+            <div style="font-size: 1.1rem; font-weight: 600; color: var(--text); margin-bottom: 4px;">No products found</div>
+            <p>Try adjusting your search keyword or clearing some filters.</p>
+          </div>
+        `;
+        paginationBar.style.display = 'none';
+        return;
+      }
+
+      productsGrid.innerHTML = '';
+
+      state.products.forEach((prod, index) => {
+        const card = document.createElement('div');
+        card.className = 'product-card';
+
+        const brandName = prod.brand || (prod.brandDetail ? prod.brandDetail.name : 'Unknown');
+        const statusClass = (prod.status || '').toUpperCase() === 'ACTIVE' ? 'status-active' : 'status-inactive';
+        const isStock = prod.available !== false;
+
+        const categoriesHtml = (prod.categories || []).slice(0, 3).map(c =>
+          `<span class="cat-tag">${escapeHtml(c)}</span>`
+        ).join('');
+
+        card.innerHTML = `
+          <div class="card-top">
+            <span class="brand-pill">${escapeHtml(brandName)}</span>
+            <span class="status-pill ${statusClass}">${escapeHtml(prod.status || 'ACTIVE')}</span>
+          </div>
+          <div class="card-title" title="${escapeHtml(prod.name || '')}">${escapeHtml(prod.name || '')}</div>
+          <div class="card-sku">${escapeHtml(prod.sku || '')}</div>
+          <div class="card-categories">${categoriesHtml}</div>
+          <div class="card-bottom">
+            <div class="price-box">
+              <div class="price-val">${formatPrice(prod.price)}</div>
+              <div class="stock-indicator ${isStock ? 'stock-in' : 'stock-out'}">
+                ● ${isStock ? 'In Stock' : 'Out of Stock'}
+              </div>
+            </div>
+            <button type="button" class="btn-open" data-index="${index}">Open Details</button>
+          </div>
+        `;
+
+        card.querySelector('.btn-open').addEventListener('click', () => {
+          openProductModal(index);
+        });
+
+        productsGrid.appendChild(card);
+      });
+
+      renderPagination();
+    }
+
+    // Render pagination buttons
+    function renderPagination() {
+      if (state.totalPages <= 1) {
+        paginationBar.style.display = 'none';
+        return;
+      }
+
+      paginationBar.style.display = 'flex';
+      pageNav.innerHTML = '';
+
+      // Prev Button
+      const prevBtn = document.createElement('button');
+      prevBtn.className = 'page-btn';
+      prevBtn.textContent = '← Prev';
+      prevBtn.disabled = state.page === 0;
+      prevBtn.addEventListener('click', () => {
+        if (state.page > 0) {
+          state.page--;
+          executeSearch();
+          window.scrollTo({ top: 0, behavior: 'smooth' });
+        }
+      });
+      pageNav.appendChild(prevBtn);
+
+      // Page numbers (smart windowing)
+      const maxButtons = 7;
+      let startPage = Math.max(0, state.page - 3);
+      let endPage = Math.min(state.totalPages - 1, startPage + maxButtons - 1);
+
+      if (endPage - startPage < maxButtons - 1) {
+        startPage = Math.max(0, endPage - maxButtons + 1);
+      }
+
+      if (startPage > 0) {
+        addPageBtn(0);
+        if (startPage > 1) {
+          const ellipsis = document.createElement('span');
+          ellipsis.textContent = '...';
+          ellipsis.style.padding = '0 6px';
+          pageNav.appendChild(ellipsis);
+        }
+      }
+
+      for (let p = startPage; p <= endPage; p++) {
+        addPageBtn(p);
+      }
+
+      if (endPage < state.totalPages - 1) {
+        if (endPage < state.totalPages - 2) {
+          const ellipsis = document.createElement('span');
+          ellipsis.textContent = '...';
+          ellipsis.style.padding = '0 6px';
+          pageNav.appendChild(ellipsis);
+        }
+        addPageBtn(state.totalPages - 1);
+      }
+
+      // Next Button
+      const nextBtn = document.createElement('button');
+      nextBtn.className = 'page-btn';
+      nextBtn.textContent = 'Next →';
+      nextBtn.disabled = state.page >= state.totalPages - 1;
+      nextBtn.addEventListener('click', () => {
+        if (state.page < state.totalPages - 1) {
+          state.page++;
+          executeSearch();
+          window.scrollTo({ top: 0, behavior: 'smooth' });
+        }
+      });
+      pageNav.appendChild(nextBtn);
+    }
+
+    function addPageBtn(pageIdx) {
+      const btn = document.createElement('button');
+      btn.className = `page-btn ${pageIdx === state.page ? 'active' : ''}`;
+      btn.textContent = pageIdx + 1;
+      btn.addEventListener('click', () => {
+        if (state.page !== pageIdx) {
+          state.page = pageIdx;
+          executeSearch();
+          window.scrollTo({ top: 0, behavior: 'smooth' });
+        }
+      });
+      pageNav.appendChild(btn);
+    }
+
+    // Open Modal Dialog - ZERO Network Request: uses loaded product object directly!
+    function openProductModal(index) {
+      const prod = state.products[index];
+      if (!prod) return;
+
+      modalTitle.textContent = prod.name || 'Product Details';
+      modalSubtitle.textContent = `SKU: ${prod.sku} • ID: ${prod.id} • Status: ${prod.status || 'ACTIVE'}`;
+
+      const brandName = prod.brand || (prod.brandDetail ? prod.brandDetail.name : 'N/A');
+      const categoriesText = (prod.categories || []).join(', ') || 'None';
+
+      // Total inventory calculate
+      let totalStock = 0;
+      (prod.variants || []).forEach(v => {
+        (v.inventory || []).forEach(inv => {
+          totalStock += (inv.availableQuantity || 0);
+        });
+      });
+
+      // Variants Table Rows
+      let variantsHtml = '';
+      if (prod.variants && prod.variants.length > 0) {
+        const rows = prod.variants.map(v => {
+          const invList = (v.inventory || []).map(i =>
+            `${escapeHtml(i.warehouseName || 'Warehouse')}: <strong>${i.availableQuantity || 0}</strong>`
+          ).join('<br>') || 'No stock info';
+
+          return `
+            <tr>
+              <td><code>${escapeHtml(v.sku)}</code></td>
+              <td>${escapeHtml(v.color || '—')}</td>
+              <td>${escapeHtml(v.size || '—')}</td>
+              <td>${escapeHtml(v.material || '—')}</td>
+              <td><span class="status-pill status-active">${escapeHtml(v.status || 'ACTIVE')}</span></td>
+              <td>${invList}</td>
+            </tr>
+          `;
+        }).join('');
+
+        variantsHtml = `
+          <div class="section-title">📦 Product Variants (${prod.variants.length})</div>
+          <div class="table-container">
+            <table>
+              <thead>
+                <tr>
+                  <th>Variant SKU</th>
+                  <th>Color</th>
+                  <th>Size</th>
+                  <th>Material</th>
+                  <th>Status</th>
+                  <th>Stock by Warehouse</th>
+                </tr>
+              </thead>
+              <tbody>${rows}</tbody>
+            </table>
+          </div>
+        `;
+      }
+
+      // Attributes Table Rows
+      let attributesHtml = '';
+      if (prod.attributes && prod.attributes.length > 0) {
+        const rows = prod.attributes.map(a => `
+          <tr>
+            <td style="font-weight: 600; width: 35%;">${escapeHtml(a.name || '')}</td>
+            <td>${escapeHtml(a.value || '')}</td>
+          </tr>
+        `).join('');
+
+        attributesHtml = `
+          <div class="section-title">⚙️ Product Attributes (${prod.attributes.length})</div>
+          <div class="table-container">
+            <table>
+              <thead>
+                <tr><th>Attribute</th><th>Value</th></tr>
+              </thead>
+              <tbody>${rows}</tbody>
+            </table>
+          </div>
+        `;
+      }
+
+      // Components Table Rows
+      let componentsHtml = '';
+      if (prod.components && prod.components.length > 0) {
+        const rows = prod.components.map(c => `
+          <tr>
+            <td><strong>${escapeHtml(c.name || '')}</strong></td>
+            <td>${escapeHtml(c.type || '')}</td>
+            <td>${c.quantity || 1}</td>
+          </tr>
+        `).join('');
+
+        componentsHtml = `
+          <div class="section-title">🧩 Bill of Materials / Components (${prod.components.length})</div>
+          <div class="table-container">
+            <table>
+              <thead>
+                <tr><th>Component Name</th><th>Type</th><th>Qty</th></tr>
+              </thead>
+              <tbody>${rows}</tbody>
+            </table>
+          </div>
+        `;
+      }
+
+      // Pricing Tiers Table
+      let pricesHtml = '';
+      if (prod.prices && prod.prices.length > 0) {
+        const rows = prod.prices.map(p => `
+          <tr>
+            <td><code>${escapeHtml(p.variantSku || 'Product Default')}</code></td>
+            <td>${p.currency || 'INR'}</td>
+            <td>${formatPrice(p.price, p.currency)}</td>
+            <td>${p.discountPrice ? formatPrice(p.discountPrice, p.currency) : '—'}</td>
+            <td>${p.validFrom ? new Date(p.validFrom).toLocaleDateString() : 'Always'}</td>
+          </tr>
+        `).join('');
+
+        pricesHtml = `
+          <div class="section-title">🏷️ Pricing Tiers (${prod.prices.length})</div>
+          <div class="table-container">
+            <table>
+              <thead>
+                <tr><th>Target</th><th>Currency</th><th>Base Price</th><th>Discount Price</th><th>Valid From</th></tr>
+              </thead>
+              <tbody>${rows}</tbody>
+            </table>
+          </div>
+        `;
+      }
+
+      modalBody.innerHTML = `
+        <div class="meta-grid">
+          <div class="meta-item">
+            <div class="meta-label">Brand</div>
+            <div class="meta-val">${escapeHtml(brandName)}</div>
+          </div>
+          <div class="meta-item">
+            <div class="meta-label">Base Price</div>
+            <div class="meta-val" style="color: var(--primary); font-size: 1.1rem;">${formatPrice(prod.price)}</div>
+          </div>
+          <div class="meta-item">
+            <div class="meta-label">Categories</div>
+            <div class="meta-val">${escapeHtml(categoriesText)}</div>
+          </div>
+          <div class="meta-item">
+            <div class="meta-label">Total Inventory</div>
+            <div class="meta-val" style="color: ${totalStock > 0 ? 'var(--success)' : 'var(--danger)'};">
+              ${totalStock} units available
+            </div>
+          </div>
+          <div class="meta-item">
+            <div class="meta-label">Slug</div>
+            <div class="meta-val"><code>${escapeHtml(prod.slug || '')}</code></div>
+          </div>
+          <div class="meta-item">
+            <div class="meta-label">Created At</div>
+            <div class="meta-val">${prod.createdAt ? new Date(prod.createdAt).toLocaleString() : 'N/A'}</div>
+          </div>
+        </div>
+
+        <div>
+          <div class="section-title">📝 Description</div>
+          <p style="background: #f8fafc; padding: 12px; border-radius: var(--radius); border: 1px solid var(--border); font-size: 0.9rem;">
+            ${escapeHtml(prod.description || 'No description available for this product.')}
+          </p>
+        </div>
+
+        ${variantsHtml}
+        ${pricesHtml}
+        ${attributesHtml}
+        ${componentsHtml}
+
+        <details class="raw-json">
+          <summary>🔍 Raw Search Projection Document (JSON) — Click to view / compare</summary>
+          <pre>${escapeHtml(JSON.stringify(prod, null, 2))}</pre>
+        </details>
+      `;
+
+      productDialog.showModal();
+    }
+
+    function closeModal() {
+      productDialog.close();
+    }
+
+    modalCloseBtn.addEventListener('click', closeModal);
+    productDialog.addEventListener('click', (e) => {
+      if (e.target === productDialog) closeModal();
+    });
+
+    // Event Listeners for Search & Suggestions
+    const debouncedFetch = debounce((val) => fetchSuggestions(val), 200);
+
+    searchInput.addEventListener('input', (e) => {
+      debouncedFetch(e.target.value);
+    });
+
+    searchInput.addEventListener('keydown', (e) => {
+      const items = suggestionsDropdown.querySelectorAll('.suggestion-item');
+
+      if (e.key === 'ArrowDown') {
+        e.preventDefault();
+        if (items.length > 0) {
+          state.selectedSuggestionIndex = (state.selectedSuggestionIndex + 1) % items.length;
+          updateHighlightedSuggestion(items);
+        }
+      } else if (e.key === 'ArrowUp') {
+        e.preventDefault();
+        if (items.length > 0) {
+          state.selectedSuggestionIndex = (state.selectedSuggestionIndex - 1 + items.length) % items.length;
+          updateHighlightedSuggestion(items);
+        }
+      } else if (e.key === 'Enter') {
+        e.preventDefault();
+        if (state.selectedSuggestionIndex >= 0 && state.suggestions[state.selectedSuggestionIndex]) {
+          applyFilterFromSuggestion(state.suggestions[state.selectedSuggestionIndex]);
+        } else {
+          applyKeywordFilter(searchInput.value);
+        }
+      } else if (e.key === 'Escape') {
+        hideSuggestions();
+      }
+    });
+
+    function updateHighlightedSuggestion(items) {
+      items.forEach((item, idx) => {
+        item.classList.toggle('highlighted', idx === state.selectedSuggestionIndex);
+      });
+      if (state.selectedSuggestionIndex >= 0 && items[state.selectedSuggestionIndex]) {
+        items[state.selectedSuggestionIndex].scrollIntoView({ block: 'nearest' });
+      }
+    }
+
+    // Close suggestions on outside click
+    document.addEventListener('click', (e) => {
+      if (!searchInput.contains(e.target) && !suggestionsDropdown.contains(e.target)) {
+        hideSuggestions();
+      }
+    });
+
+    searchBtn.addEventListener('click', () => {
+      applyKeywordFilter(searchInput.value);
+    });
+
+    clearAllFiltersBtn.addEventListener('click', clearAllFilters);
+
+    minPriceInput.addEventListener('change', () => { state.page = 0; executeSearch(); });
+    maxPriceInput.addEventListener('change', () => { state.page = 0; executeSearch(); });
+    inStockCheckbox.addEventListener('change', () => { state.page = 0; executeSearch(); });
+
+    sortSelect.addEventListener('change', (e) => {
+      state.sort = e.target.value;
+      state.page = 0;
+      executeSearch();
+    });
+
+    pageSizeSelect.addEventListener('change', (e) => {
+      state.size = parseInt(e.target.value, 10);
+      state.page = 0;
+      executeSearch();
+    });
+
+    function escapeHtml(str) {
+      if (!str) return '';
+      return String(str)
+        .replace(/&/g, '&amp;')
+        .replace(/</g, '&lt;')
+        .replace(/>/g, '&gt;')
+        .replace(/"/g, '&quot;')
+        .replace(/'/g, '&#39;');
+    }
+
+    // Initial load
+    executeSearch();
+  </script>
+</body>
+</html>
