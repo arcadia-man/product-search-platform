@@ -1,0 +1,22 @@
+{
+  "name": "product-search-mysql",
+  "config": {
+    "connector.class": "io.debezium.connector.mysql.MySqlConnector",
+    "database.hostname": "host.docker.internal",
+    "database.port": "3306",
+    "database.user": "<MYSQL_CDC_USER>",
+    "database.password": "<MYSQL_CDC_PASSWORD>",
+    "database.server.id": "184054",
+    "topic.prefix": "product-search",
+    "database.include.list": "product_search",
+    "table.include.list": "product_search.products,product_search.brands,product_search.categories,product_search.product_categories,product_search.product_variants,product_search.product_prices,product_search.product_components,product_search.product_attributes,product_search.inventory,product_search.warehouses",
+    "snapshot.mode": "initial",
+    "schema.history.internal.kafka.bootstrap.servers": "kafka:29092",
+    "schema.history.internal.kafka.topic": "product-search-schema-history",
+    "include.schema.changes": "false",
+    "transforms": "route",
+    "transforms.route.type": "org.apache.kafka.connect.transforms.RegexRouter",
+    "transforms.route.regex": "product-search\\.product_search\\.(.*)",
+    "transforms.route.replacement": "product-changes"
+  }
+}

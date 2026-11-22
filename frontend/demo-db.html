@@ -899,7 +899,7 @@
       }
 
       try {
-        const url = `${getApiBase()}/api/v1/products/suggestions?q=${encodeURIComponent(query.trim())}`;
+        const url = `${getApiBase()}/api/v1/products/suggestions/db?q=${encodeURIComponent(query.trim())}`;
         const res = await fetch(url);
         if (!res.ok) throw new Error('Failed to fetch suggestions');
         const data = await res.json();
