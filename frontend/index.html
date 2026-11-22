@@ -1,0 +1,23 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Product Search Demo</title>
+</head>
+<body>
+  <p>Opening the selected product search demo…</p>
+  <nav aria-label="Product search demos">
+    <a href="demo-db.html">Database search demo</a>
+    <a href="demo-os.html">OpenSearch demo</a>
+  </nav>
+  <script>
+    const engine = new URLSearchParams(window.location.search).get('engine')
+      || window.location.hash.slice(1);
+    const demo = ['os', 'opensearch'].includes(engine.toLowerCase())
+      ? 'demo-os.html'
+      : 'demo-db.html';
+    window.location.replace(new URL(demo, window.location.href));
+  </script>
+</body>
+</html>
