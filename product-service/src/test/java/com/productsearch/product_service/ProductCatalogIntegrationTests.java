@@ -1,15 +1,17 @@
 package com.productsearch.product_service;
 
+import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.get;
+import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.patch;
+import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.post;
+import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.jsonPath;
+import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
+
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.context.SpringBootTest;
 import org.springframework.http.MediaType;
 import org.springframework.test.web.servlet.MockMvc;
-import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.get;
-import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.patch;
-import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.jsonPath;
-import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
 import org.springframework.test.web.servlet.setup.MockMvcBuilders;
 import org.springframework.web.context.WebApplicationContext;
 
@@ -27,14 +29,27 @@ class ProductCatalogIntegrationTests {
     }
 
     @Test
-    void testSuggestionsEndpoint() throws Exception {
-        mockMvc.perform(get("/api/v1/products/suggestions")
+    void testDbSuggestionsEndpoint() throws Exception {
+        mockMvc.perform(get("/api/v1/products/suggestions/db")
                         .param("q", "app"))
                 .andExpect(status().isOk())
                 .andExpect(jsonPath("$.suggestions").isArray())
                 .andExpect(jsonPath("$.suggestions[0].key").exists())
                 .andExpect(jsonPath("$.suggestions[0].value").exists())
                 .andExpect(jsonPath("$.suggestions[0].displayLabel").exists());
+    }
+
+    @Test
+    void backendSelectionMustUseExplicitRoutes() throws Exception {
+        mockMvc.perform(get("/api/v1/products/suggestions")
+                        .param("q", "app")
+                        .param("engine", "os"))
+                .andExpect(status().isNotFound());
+
+        mockMvc.perform(get("/api/v1/products/search")
+                        .param("page", "0")
+                        .param("size", "5"))
+                .andExpect(status().isNotFound());
     }
 
     @Test
@@ -64,6 +79,45 @@ class ProductCatalogIntegrationTests {
                 .andExpect(status().isOk())
                 .andExpect(jsonPath("$.content").isArray())
                 .andExpect(jsonPath("$.content[0].brand").value("Apple"));
+    }
+
+    @Test
+    void fullSyncIsNoLongerExposedByProductService() throws Exception {
+        mockMvc.perform(post("/api/v1/products/sync/opensearch"))
+                .andExpect(status().isNotFound());
+    }
+
+    @Test
+    void testOpenSearchSearchAndSuggestionsEndpoints() throws Exception {
+        mockMvc.perform(get("/api/v1/products/search/os")
+                        .param("page", "0")
+                        .param("size", "5"))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.content").isArray())
+                .andExpect(jsonPath("$.totalElements").isNumber());
+
+        mockMvc.perform(get("/api/v1/products/suggestions/os")
+                        .param("q", "app"))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.suggestions").isArray());
+    }
+
+    @Test
+    void openSearchSuggestionsMatchCaseInsensitivelyAndWithinWords() throws Exception {
+        mockMvc.perform(get("/api/v1/products/suggestions/os")
+                        .param("q", "app"))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.suggestions[?(@.value == 'Apple')]").isNotEmpty());
+
+        mockMvc.perform(get("/api/v1/products/suggestions/os")
+                        .param("q", "hone"))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.suggestions[?(@.value == 'iPhone 16')]").isNotEmpty());
+
+        mockMvc.perform(get("/api/v1/products/suggestions/os")
+                        .param("q", "iPhone 16"))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.suggestions[?(@.value == 'iPhone 16')]").isNotEmpty());
     }
 
     @Test

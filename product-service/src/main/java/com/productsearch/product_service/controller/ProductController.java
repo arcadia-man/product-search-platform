@@ -13,6 +13,7 @@ import org.springframework.web.bind.annotation.RestController;
 import com.productsearch.product_service.dto.ProductResponse;
 import com.productsearch.product_service.dto.ProductSearchRequest;
 import com.productsearch.product_service.dto.ProductSuggestionsResponse;
+import com.productsearch.product_service.service.ProductOpenSearchService;
 import com.productsearch.product_service.service.ProductSearchService;
 import com.productsearch.product_service.service.ProductSuggestionService;
 
@@ -26,9 +27,10 @@ public class ProductController {
 
     private final ProductSearchService productSearchService;
     private final ProductSuggestionService productSuggestionService;
+    private final ProductOpenSearchService productOpenSearchService;
 
     @GetMapping("/search/db")
-    public Page<ProductResponse> searchProducts(
+    public Page<ProductResponse> searchProductsDb(
             @Valid @ModelAttribute ProductSearchRequest request,
             @PageableDefault(
                     size = 20,
@@ -39,9 +41,27 @@ public class ProductController {
         return productSearchService.search(request, pageable);
     }
 
-    @GetMapping("/suggestions")
-    public ProductSuggestionsResponse getSuggestions(
-            @RequestParam("q") String keyword) {
+    @GetMapping("/search/os")
+    public Page<ProductResponse> searchProductsOpenSearch(
+            @Valid @ModelAttribute ProductSearchRequest request,
+            @PageableDefault(
+                    size = 20,
+                    sort = "createdAt",
+                    direction = Sort.Direction.DESC
+            ) Pageable pageable
+    ) {
+        return productOpenSearchService.search(request, pageable);
+    }
+
+    @GetMapping("/suggestions/db")
+    public ProductSuggestionsResponse getDbSuggestions(@RequestParam("q") String keyword) {
         return productSuggestionService.getSuggestions(keyword);
     }
+
+    @GetMapping("/suggestions/os")
+    public ProductSuggestionsResponse getOpenSearchSuggestions(
+            @RequestParam("q") String keyword) {
+        return productOpenSearchService.getSuggestions(keyword);
+    }
+
 }
