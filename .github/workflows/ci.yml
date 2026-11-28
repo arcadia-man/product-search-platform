@@ -80,7 +80,7 @@ jobs:
       - name: Run full MySQL-to-OpenSearch sync
         run: >-
           mvn -B -ntp -f search-indexer/pom.xml spring-boot:run
-          -Dspring-boot.run.arguments=--search-indexer.full-sync-on-startup=true,--spring.kafka.admin.auto-create=false
+          -Dspring-boot.run.arguments=--search-indexer.full-sync-on-startup=true,--search-indexer.exit-on-complete=true,--spring.main.web-application-type=none,--spring.kafka.admin.auto-create=false
 
       - name: Verify the full sync created an index alias and documents
         run: |

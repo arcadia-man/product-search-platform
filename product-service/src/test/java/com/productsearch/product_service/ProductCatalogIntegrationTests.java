@@ -103,4 +103,23 @@ class ProductCatalogIntegrationTests {
                 .andExpect(status().isBadRequest())
                 .andExpect(jsonPath("$.success").value(false));
     }
+
+    @Test
+    void testOpenSearchSearchEndpoint() throws Exception {
+        mockMvc.perform(get("/api/v1/products/search/os")
+                        .param("page", "0")
+                        .param("size", "5"))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.content").isArray())
+                .andExpect(jsonPath("$.totalElements").isNumber())
+                .andExpect(jsonPath("$.totalPages").isNumber());
+    }
+
+    @Test
+    void testOpenSearchSuggestionsEndpoint() throws Exception {
+        mockMvc.perform(get("/api/v1/products/suggestions/os")
+                        .param("q", "app"))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.suggestions").isArray());
+    }
 }
