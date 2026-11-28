@@ -1,6 +1,7 @@
 package com.productsearch.product_service;
 
 import org.junit.jupiter.api.BeforeEach;
+import org.junit.jupiter.api.Tag;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.context.SpringBootTest;
@@ -14,6 +15,7 @@ import org.springframework.test.web.servlet.setup.MockMvcBuilders;
 import org.springframework.web.context.WebApplicationContext;
 
 @SpringBootTest
+@Tag("integration")
 class ProductCatalogIntegrationTests {
 
     @Autowired
@@ -102,5 +104,24 @@ class ProductCatalogIntegrationTests {
                         .content(invalidPayload))
                 .andExpect(status().isBadRequest())
                 .andExpect(jsonPath("$.success").value(false));
+    }
+
+    @Test
+    void testOpenSearchSearchEndpoint() throws Exception {
+        mockMvc.perform(get("/api/v1/products/search/os")
+                        .param("page", "0")
+                        .param("size", "5"))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.content").isArray())
+                .andExpect(jsonPath("$.totalElements").isNumber())
+                .andExpect(jsonPath("$.totalPages").isNumber());
+    }
+
+    @Test
+    void testOpenSearchSuggestionsEndpoint() throws Exception {
+        mockMvc.perform(get("/api/v1/products/suggestions/os")
+                        .param("q", "app"))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.suggestions").isArray());
     }
 }
